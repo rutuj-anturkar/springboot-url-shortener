@@ -38,8 +38,18 @@ public class ShortenUrlServiceImpl implements ShortenUrlService {
         return new ShortenUrlResponseDTO(shortenedUrl);
     }
 
+    @Override
+    public String getOriginalUrl(String shortUrl){
+        List<ShortenedUrl> queryResults = shortenedUrlRepository.findByShortenedUrl(shortUrl);
+
+        if(queryResults.isEmpty()){
+            throw new RuntimeException("Redirect Scenario Short url is invalid");
+        }
+        System.out.println(queryResults.get(0).getOriginalUrl());
+        return queryResults.get(0).getOriginalUrl();
+    }
+
     private String getShortenedUrl(String longUrl) {
         return UUID.randomUUID().toString().substring(0, 6);
-
     }
 }

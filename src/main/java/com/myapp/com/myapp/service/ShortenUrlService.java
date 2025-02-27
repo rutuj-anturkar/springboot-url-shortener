@@ -5,4 +5,5 @@ import com.myapp.dto.ShortenUrlResponseDTO;
 
 public interface ShortenUrlService {
     ShortenUrlResponseDTO getShortenedUrl(ShortenUrlRequestDTO shortenUrlRequestDTO);
+    public String getOriginalUrl(String shortUrl);
 }
