@@ -1,10 +1,14 @@
 package com.myapp.com.myapp.service;
 
+import com.myapp.custom_exceptions.ResourceNotFoundException;
 import com.myapp.dto.ShortenUrlRequestDTO;
 import com.myapp.dto.ShortenUrlResponseDTO;
+import com.myapp.dto.UrlDetailsDTO;
 import com.myapp.model.ShortenedUrl;
 import com.myapp.repository.ShortenedUrlRepository;
 import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +20,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ShortenUrlServiceImpl implements ShortenUrlService {
     private ShortenedUrlRepository shortenedUrlRepository;
+    private ModelMapper modelMapper;
 
     @Override
     public ShortenUrlResponseDTO getShortenedUrl(ShortenUrlRequestDTO shortenUrlRequestDTO) {
@@ -39,14 +44,27 @@ public class ShortenUrlServiceImpl implements ShortenUrlService {
     }
 
     @Override
+    @Cacheable(value = "urlDetails", key = "#shortUrl")
     public String getOriginalUrl(String shortUrl){
         List<ShortenedUrl> queryResults = shortenedUrlRepository.findByShortenedUrl(shortUrl);
 
         if(queryResults.isEmpty()){
-            throw new RuntimeException("Redirect Scenario Short url is invalid");
+            throw new ResourceNotFoundException("Redirect Scenario: Short url is invalid");
         }
         System.out.println(queryResults.get(0).getOriginalUrl());
         return queryResults.get(0).getOriginalUrl();
+    }
+
+    @Override
+    @Cacheable(value="urlDetails", key="#shortUrl")
+    public UrlDetailsDTO getUrlDetails(String shortUrl) {
+        List<ShortenedUrl> queryResults = shortenedUrlRepository.findByShortenedUrl(shortUrl);
+
+        if(queryResults.isEmpty()){
+            throw new ResourceNotFoundException("Get Url Details Scenario: Short url is invalid");
+        }
+
+        return modelMapper.map(queryResults.get(0),UrlDetailsDTO.class);
     }
 
     private String getShortenedUrl(String longUrl) {

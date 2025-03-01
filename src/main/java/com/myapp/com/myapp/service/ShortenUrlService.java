@@ -2,8 +2,11 @@ package com.myapp.com.myapp.service;
 
 import com.myapp.dto.ShortenUrlRequestDTO;
 import com.myapp.dto.ShortenUrlResponseDTO;
+import com.myapp.dto.UrlDetailsDTO;
 
 public interface ShortenUrlService {
     ShortenUrlResponseDTO getShortenedUrl(ShortenUrlRequestDTO shortenUrlRequestDTO);
-    public String getOriginalUrl(String shortUrl);
+    String getOriginalUrl(String shortUrl);
+
+    UrlDetailsDTO getUrlDetails(String shortUrl);
 }

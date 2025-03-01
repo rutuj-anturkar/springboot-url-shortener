@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
+//@NoArgsConstructor
 @Entity
 @Table(name = "shortened_urls")
 public class ShortenedUrl {
@@ -22,4 +22,8 @@ public class ShortenedUrl {
     private String shortenedUrl;
     private String originalUrl;
     private LocalDateTime creationTime;
+
+    public ShortenedUrl(){
+        this.creationTime = LocalDateTime.now();
+    }
 }
