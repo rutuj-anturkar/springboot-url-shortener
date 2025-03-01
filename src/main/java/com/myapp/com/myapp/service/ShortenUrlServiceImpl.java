@@ -44,7 +44,7 @@ public class ShortenUrlServiceImpl implements ShortenUrlService {
     }
 
     @Override
-    @Cacheable(value = "urlDetails", key = "#shortUrl")
+    @Cacheable(value = "originalUrl", key = "#shortUrl")
     public String getOriginalUrl(String shortUrl){
         List<ShortenedUrl> queryResults = shortenedUrlRepository.findByShortenedUrl(shortUrl);
 
