@@ -8,6 +8,7 @@ import com.myapp.model.ShortenedUrl;
 import com.myapp.repository.ShortenedUrlRepository;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -36,7 +37,7 @@ public class ShortenUrlServiceImpl implements ShortenUrlService {
 
         String shortenedUrl = generateShortenedUrl(shortenUrlRequestDTO.getOriginalUrl());
 
-        while(!shortenedUrlRepository.findByShortenedUrl(shortenedUrl).isEmpty()) {
+        while (!shortenedUrlRepository.findByShortenedUrl(shortenedUrl).isEmpty()) {
             shortenedUrl = generateShortenedUrl(shortenUrlRequestDTO.getOriginalUrl());
         }
 
@@ -49,17 +50,17 @@ public class ShortenUrlServiceImpl implements ShortenUrlService {
     }
 
     @Override
-    @Cacheable(value = "originalUrl", key = "#shortUrl")
-    public String getOriginalUrl(String shortUrl){
-        return shortenedUrlRepository.findByShortenedUrl(shortUrl).orElseThrow(() -> new ResourceNotFoundException("Redirect Scenario: Short url is invalid")).getOriginalUrl();
+    @Cacheable(value = "urlDetails", key = "#shortUrl")
+    public UrlDetailsDTO getUrlDetails(String shortUrl) {
+        ShortenedUrl shortenedUrlResult = shortenedUrlRepository.findByShortenedUrl(shortUrl).orElseThrow(() -> new ResourceNotFoundException("Redirect Scenario: Short url is invalid"));
+
+        return modelMapper.map(shortenedUrlResult, UrlDetailsDTO.class);
     }
 
     @Override
-    @Cacheable(value="urlDetails", key="#shortUrl")
-    public UrlDetailsDTO getUrlDetails(String shortUrl) {
-        ShortenedUrl shortenedUrlResult =shortenedUrlRepository.findByShortenedUrl(shortUrl).orElseThrow(() -> new ResourceNotFoundException("Redirect Scenario: Short url is invalid"));
-
-        return modelMapper.map(shortenedUrlResult,UrlDetailsDTO.class);
+    public void deleteUrlByShortenedUrl(String shortUrl) {
+        String originalUrl = this.getUrlDetails(shortUrl).getOriginalUrl();
+        cacheService.deleteByShortAndLongUrl(shortUrl, originalUrl);
     }
 
     private String generateShortenedUrl(String longUrl) {

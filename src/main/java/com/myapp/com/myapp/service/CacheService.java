@@ -5,4 +5,5 @@ import com.myapp.model.ShortenedUrl;
 
 public interface CacheService {
     public ShortenedUrl getShortUrlByOriginalUrl(String originalUrl);
+    public void deleteByShortAndLongUrl(String shortUrl, String longUrl);
 }

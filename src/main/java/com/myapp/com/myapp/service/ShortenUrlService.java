@@ -6,7 +6,9 @@ import com.myapp.dto.UrlDetailsDTO;
 
 public interface ShortenUrlService {
     UrlDetailsDTO getShortenedUrl(ShortenUrlRequestDTO shortenUrlRequestDTO);
-    String getOriginalUrl(String shortUrl);
+    //String getOriginalUrl(String shortUrl);
 
     UrlDetailsDTO getUrlDetails(String shortUrl);
+
+    void deleteUrlByShortenedUrl(String shortUrl);
 }

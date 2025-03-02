@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface ShortenedUrlRepository extends JpaRepository<ShortenedUrl,Long> {
     Optional<ShortenedUrl> findByShortenedUrl(String shortenedUrl);
     Optional<ShortenedUrl> findByOriginalUrl(String originalUrl);
+    void deleteByShortenedUrl(String shortenedUrl);
 }

@@ -1,5 +1,6 @@
 package com.myapp.controller;
 
+import com.myapp.com.myapp.service.CacheService;
 import com.myapp.com.myapp.service.ShortenUrlService;
 import com.myapp.dto.ShortenUrlRequestDTO;
 import com.myapp.dto.ShortenUrlResponseDTO;
@@ -20,6 +21,7 @@ import java.io.IOException;
 public class ShortenUrlController {
     private ShortenUrlService shortenUrlService;
     private ModelMapper modelMapper;
+
     @PostMapping
     public ResponseEntity<?> getShortUrl(ShortenUrlRequestDTO shortenUrlRequestDTO){
         return ResponseEntity.status(HttpStatus.OK).body(modelMapper.map(shortenUrlService.getShortenedUrl(shortenUrlRequestDTO), ShortenUrlResponseDTO.class));
@@ -27,11 +29,17 @@ public class ShortenUrlController {
 
     @GetMapping("/{shortUrl}")
     public void redirectToOriginalUrl(@PathVariable String shortUrl, HttpServletResponse response) throws IOException {
-            response.sendRedirect(shortenUrlService.getOriginalUrl(shortUrl));
+            response.sendRedirect(shortenUrlService.getUrlDetails(shortUrl).getOriginalUrl());
     }
 
     @GetMapping("/urlDetails/{shortUrl}")
     public ResponseEntity<?> getUrlDetails(@PathVariable String shortUrl){
         return ResponseEntity.status((HttpStatus.OK)).body(shortenUrlService.getUrlDetails(shortUrl));
+    }
+
+    @DeleteMapping("/{shortUrl}")
+    public ResponseEntity<?> deleteByShortUrl(@PathVariable String shortUrl){
+        shortenUrlService.deleteUrlByShortenedUrl(shortUrl);
+        return ResponseEntity.noContent().build();
     }
 }
