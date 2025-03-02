@@ -8,7 +8,9 @@ import com.myapp.model.ShortenedUrl;
 import com.myapp.repository.ShortenedUrlRepository;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,53 +23,46 @@ import java.util.UUID;
 public class ShortenUrlServiceImpl implements ShortenUrlService {
     private ShortenedUrlRepository shortenedUrlRepository;
     private ModelMapper modelMapper;
+    private CacheService cacheService;
 
+    @CachePut(value = "urlDetails", key = "#result.shortenedUrl")
     @Override
-    public ShortenUrlResponseDTO getShortenedUrl(ShortenUrlRequestDTO shortenUrlRequestDTO) {
-        List<ShortenedUrl> queryResults = shortenedUrlRepository.findByOriginalUrl(shortenUrlRequestDTO.getOriginalUrl());
-        if (queryResults.size()>0) {
-            return new ShortenUrlResponseDTO(queryResults.get(0).getShortenedUrl());
+    public UrlDetailsDTO getShortenedUrl(ShortenUrlRequestDTO shortenUrlRequestDTO) {
+        ShortenedUrl result = cacheService.getShortUrlByOriginalUrl(shortenUrlRequestDTO.getOriginalUrl());
+
+        if (result != null) {
+            return modelMapper.map(result, UrlDetailsDTO.class);
         }
 
-        String shortenedUrl = getShortenedUrl(shortenUrlRequestDTO.getOriginalUrl());
+        String shortenedUrl = generateShortenedUrl(shortenUrlRequestDTO.getOriginalUrl());
 
-        while (!shortenedUrlRepository.findByShortenedUrl(shortenedUrl).isEmpty()) {
-            shortenedUrl = getShortenedUrl(shortenUrlRequestDTO.getOriginalUrl());
+        while(!shortenedUrlRepository.findByShortenedUrl(shortenedUrl).isEmpty()) {
+            shortenedUrl = generateShortenedUrl(shortenUrlRequestDTO.getOriginalUrl());
         }
 
         ShortenedUrl shortenedUrlInstance = new ShortenedUrl();
         shortenedUrlInstance.setShortenedUrl(shortenedUrl);
         shortenedUrlInstance.setOriginalUrl(shortenUrlRequestDTO.getOriginalUrl());
         shortenedUrlRepository.save(shortenedUrlInstance);
-
-        return new ShortenUrlResponseDTO(shortenedUrl);
+        System.out.println("In put: " + modelMapper.map(shortenedUrlInstance, UrlDetailsDTO.class).getShortenedUrl());
+        return modelMapper.map(shortenedUrlInstance, UrlDetailsDTO.class);
     }
 
     @Override
     @Cacheable(value = "originalUrl", key = "#shortUrl")
     public String getOriginalUrl(String shortUrl){
-        List<ShortenedUrl> queryResults = shortenedUrlRepository.findByShortenedUrl(shortUrl);
-
-        if(queryResults.isEmpty()){
-            throw new ResourceNotFoundException("Redirect Scenario: Short url is invalid");
-        }
-        System.out.println(queryResults.get(0).getOriginalUrl());
-        return queryResults.get(0).getOriginalUrl();
+        return shortenedUrlRepository.findByShortenedUrl(shortUrl).orElseThrow(() -> new ResourceNotFoundException("Redirect Scenario: Short url is invalid")).getOriginalUrl();
     }
 
     @Override
     @Cacheable(value="urlDetails", key="#shortUrl")
     public UrlDetailsDTO getUrlDetails(String shortUrl) {
-        List<ShortenedUrl> queryResults = shortenedUrlRepository.findByShortenedUrl(shortUrl);
+        ShortenedUrl shortenedUrlResult =shortenedUrlRepository.findByShortenedUrl(shortUrl).orElseThrow(() -> new ResourceNotFoundException("Redirect Scenario: Short url is invalid"));
 
-        if(queryResults.isEmpty()){
-            throw new ResourceNotFoundException("Get Url Details Scenario: Short url is invalid");
-        }
-
-        return modelMapper.map(queryResults.get(0),UrlDetailsDTO.class);
+        return modelMapper.map(shortenedUrlResult,UrlDetailsDTO.class);
     }
 
-    private String getShortenedUrl(String longUrl) {
+    private String generateShortenedUrl(String longUrl) {
         return UUID.randomUUID().toString().substring(0, 6);
     }
 }

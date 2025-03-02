@@ -23,6 +23,7 @@ public class RedisConfig {
         // Register the module for Java 8 date/time types
         mapper.registerModule(new JavaTimeModule());
 
+        // for deserialization - to avoid class cast exception
         BasicPolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
                 .allowIfSubType(Object.class)
                 .build();
